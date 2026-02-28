@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة التعليم الاحترافي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* AUTH LAYOUT */
+        #auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1a1a1a, #000);
+        }
+
+        .auth-card {
+            background: #111;
+            padding: 40px;
+            border-radius: 15px;
+            width: 400px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: #d4af37;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .auth-switch {
+            color: #888;
+            margin-top: 15px;
+            display: inline-block;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+
+        .password-field {
+            position: relative;
+            width: 100%;
+        }
+
+        .toggle-password {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            cursor: pointer;
+            font-size: 1.2rem;
+            user-select: none;
+        }
+
+        /* DASHBOARD LAYOUT */
+        #dashboard-container {
+            display: none;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-sidebar {
+            width: 280px;
+            background: #111;
+            border-left: 1px solid #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            /* Enable scrolling */
+            height: 100%;
+        }
+
+        /* Sidebar Scrollbar Styling */
+        #app-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #app-sidebar::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        #app-sidebar::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        #app-sidebar::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #222;
+        }
+
+        .user-info h3 {
+            color: #d4af37;
+            margin: 0;
+        }
+
+        .nav-btn {
+            width: 100%;
+            padding: 15px;
+            text-align: right;
+            background: transparent;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .nav-label {
+            color: #666;
+            font-size: 0.8rem;
+            margin: 20px 0 10px;
+            padding-right: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Main Content Area */
+        #main-content {
+            flex: 1;
+            padding: 40px;
+            background: #000;
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+            height: 100vh;
+            /* Full viewport height */
+            box-sizing: border-box;
+        }
+
+        /* Custom Scrollbar for Main Content */
+        #main-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #main-content::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        #main-content::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 5px;
+        }
+
+        #main-content::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+
+        #main-content {
+            color: #fff;
+        }
+
+        /* CONTENT STYLES */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #1a1a1a;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th {
+            text-align: right;
+            padding: 15px;
+            color: #888;
+            border-bottom: 1px solid #333;
+        }
+
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #222;
+            color: #ddd;
+        }
+
+        /* Level Cards */
+        .levels-grid-v2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .lvl-card {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .lvl-card:hover {
+            transform: translateY(-5px);
+            border-color: #d4af37;
+        }
+
+        .lvl-card h2 {
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+
+        /* Messages */
+        .msg-card {
+            background: #111;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: 0.3s;
+        }
+
+        .msg-card:hover {
+            border-color: #444;
+            transform: translateX(-5px);
+        }
+
+        .notify-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ff4d4d;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 10px;
+            padding: 0 5px;
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .admin-reply-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: 10px;
+            border-right: 3px solid #d4af37;
+        }
+
+        .user-avatar {
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- AUTH SECTION -->
+    <div id="auth-container">
+        <!-- Login Form -->
+        <div id="login-view" class="auth-card">
+            <h1 style="color: #d4af37; margin-bottom: 20px;">تسجيل الدخول</h1>
+            <form id="form-login">
+                <input type="email" id="login-email" class="auth-input" placeholder="البريد الإلكتروني" required>
+                <div class="password-field">
+                    <input type="password" id="login-password" class="auth-input" placeholder="كلمة السر" required>
+                    <span class="toggle-password" onclick="app.togglePasswordVisibility('login-password')">👁️</span>
+                </div>
+                <button type="submit" class="auth-btn">دخول</button>
+            </form>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <a onclick="authSwitch('signup')" class="auth-switch">إنشاء حساب جديد</a>
+                <a onclick="authSwitch('reset')" class="auth-switch" style="color: #666; text-decoration: none;">هل نسيت
+                    كلمة السر؟</a>
+            </div>
+            <p
+                style="margin-top:20px; font-size: 0.9rem; color: #666; background: rgba(255,255,0,0.05); padding: 10px; border-radius: 5px; border: 1px solid rgba(255,255,0,0.1);">
+                <strong>حساب الأدمن:</strong><br>
+                البريد: admin@gmail.com<br>
+                الباسورد: admin123
+            </p>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signup-view" class="auth-card" style="display: none;">
+            <h1 style="color: #d4af37; margin-bottom: 20px;">إنشاء حساب جديد</h1>
+            <form id="form-signup">
+                <input type="text" id="signup-name" class="auth-input" placeholder="الاسم الكامل" required>
+                <input type="email" id="signup-email" class="auth-input" placeholder="البريد الإلكتروني" required>
+                <div class="password-field">
+                    <input type="password" id="signup-password" class="auth-input" placeholder="كلمة السر" required>
+                    <span class="toggle-password" onclick="app.togglePasswordVisibility('signup-password')">👁️</span>
+                </div>
+                <button type="submit" class="auth-btn">تسجيل</button>
+            </form>
+            <a onclick="authSwitch('login')" class="auth-switch">لديك حساب بالفعل؟ دخول</a>
+        </div>
+
+        <!-- Reset Password Form -->
+        <div id="reset-view" class="auth-card" style="display: none;">
+            <h1 style="color: #d4af37; margin-bottom: 20px;">إعادة تعيين كلمة السر</h1>
+            <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">أدخل بريدك الإلكتروني للبحث عن حسابك.</p>
+            <form id="form-reset">
+                <input type="email" id="reset-email" class="auth-input" placeholder="البريد الإلكتروني" required>
+                <button type="submit" class="auth-btn">بحث عن الحساب</button>
+            </form>
+            <div id="reset-new-sec"
+                style="display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px;">
+                <p style="color: #00ff41; margin-bottom: 15px;">✅ تم العثور على الحساب! أدخل كلمة السر الجديدة:</p>
+                <input type="password" id="reset-new-password" class="auth-input" placeholder="كلمة السر الجديدة"
+                    required>
+                <button onclick="app.handleFinalReset()" class="auth-btn"
+                    style="background: #00ff41; color: #000;">تحديث كلمة السر</button>
+            </div>
+            <a onclick="authSwitch('login')" class="auth-switch">العودة لتسجيل الدخول</a>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboard-container">
+        <!-- Sidebar -->
+        <aside id="app-sidebar">
+            <!-- Injected by JS -->
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            <!-- Dynamic Pages Loaded Here -->
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Particle Background Canvas -->
+    <canvas id="particle-canvas"></canvas>
+
+    <style>
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(to bottom, #050505, #0a1120);
+            /* Premium Dark Fade */
+        }
+
+        #auth-container,
+        #dashboard-container {
+            background: transparent !important;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+
+    <script>
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let bubbles = [];
+        // Symbols: Crypto, Forex, Percentages
+        const symbols = ['₿', '$', '€', '£', 'ETH', 'XAU', 'EUR', 'USD', '+20%', '+$500', 'BULL', 'BEAR', '🚀', 'HODL'];
+        const colors = [
+            'rgba(0, 255, 65, 0.15)',   // Profit Green
+            'rgba(212, 175, 55, 0.15)', // Gold
+            'rgba(0, 195, 255, 0.15)',  // Cyan
+            'rgba(255, 77, 77, 0.1)'    // Loss Red (Very subtle)
+        ];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Bubble {
+            constructor() {
+                this.reset(true);
+            }
+
+            reset(initial = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = initial ? Math.random() * canvas.height : canvas.height + 50;
+                this.speed = Math.random() * 0.8 + 0.2; // Slow float
+                this.size = Math.random() * 25 + 10; // Radius
+                this.text = symbols[Math.floor(Math.random() * symbols.length)];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.wobble = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = 0.01 + Math.random() * 0.02;
+                this.opacity = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                this.y -= this.speed; // Move up
+                this.wobble += this.wobbleSpeed;
+                this.x += Math.sin(this.wobble) * 0.8; // Gentle side movement
+
+                // Reset if goes off top
+                if (this.y < -50) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+
+                // Bubble Body
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = this.color.replace('0.15)', '0.3)').replace('0.1)', '0.3)');
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Text
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#eee'; // Soft white
+                ctx.font = `${this.size * 0.5}px Arial`; // Text size relative to bubble
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.text, this.x, this.y);
+
+                ctx.restore();
+            }
+        }
+
+        function initBubbles() {
+            bubbles = [];
+            const numberOfBubbles = (canvas.width * canvas.height) / 10000; // Density
+            for (let i = 0; i < numberOfBubbles; i++) {
+                bubbles.push(new Bubble());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < bubbles.length; i++) {
+                bubbles[i].update();
+                bubbles[i].draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        initBubbles();
+        animate();
+    </script>
+    <script src="js/content.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
