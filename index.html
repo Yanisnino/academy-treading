@@ -319,47 +319,40 @@
                 <a onclick="authSwitch('reset')" class="auth-switch" style="color: #666; text-decoration: none;">هل نسيت
                     كلمة السر؟</a>
             </div>
-            <p
-                style="margin-top:20px; font-size: 0.9rem; color: #666; background: rgba(255,255,0,0.05); padding: 10px; border-radius: 5px; border: 1px solid rgba(255,255,0,0.1);">
-                <strong>حساب الأدمن:</strong><br>
-                البريد: admin@gmail.com<br>
-                الباسورد: admin123
-            </p>
         </div>
+    </div>
 
-        <!-- Signup Form -->
-        <div id="signup-view" class="auth-card" style="display: none;">
-            <h1 style="color: #d4af37; margin-bottom: 20px;">إنشاء حساب جديد</h1>
-            <form id="form-signup">
-                <input type="text" id="signup-name" class="auth-input" placeholder="الاسم الكامل" required>
-                <input type="email" id="signup-email" class="auth-input" placeholder="البريد الإلكتروني" required>
-                <div class="password-field">
-                    <input type="password" id="signup-password" class="auth-input" placeholder="كلمة السر" required>
-                    <span class="toggle-password" onclick="app.togglePasswordVisibility('signup-password')">👁️</span>
-                </div>
-                <button type="submit" class="auth-btn">تسجيل</button>
-            </form>
-            <a onclick="authSwitch('login')" class="auth-switch">لديك حساب بالفعل؟ دخول</a>
-        </div>
-
-        <!-- Reset Password Form -->
-        <div id="reset-view" class="auth-card" style="display: none;">
-            <h1 style="color: #d4af37; margin-bottom: 20px;">إعادة تعيين كلمة السر</h1>
-            <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">أدخل بريدك الإلكتروني للبحث عن حسابك.</p>
-            <form id="form-reset">
-                <input type="email" id="reset-email" class="auth-input" placeholder="البريد الإلكتروني" required>
-                <button type="submit" class="auth-btn">بحث عن الحساب</button>
-            </form>
-            <div id="reset-new-sec"
-                style="display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px;">
-                <p style="color: #00ff41; margin-bottom: 15px;">✅ تم العثور على الحساب! أدخل كلمة السر الجديدة:</p>
-                <input type="password" id="reset-new-password" class="auth-input" placeholder="كلمة السر الجديدة"
-                    required>
-                <button onclick="app.handleFinalReset()" class="auth-btn"
-                    style="background: #00ff41; color: #000;">تحديث كلمة السر</button>
+    <!-- Signup Form -->
+    <div id="signup-view" class="auth-card" style="display: none;">
+        <h1 style="color: #d4af37; margin-bottom: 20px;">إنشاء حساب جديد</h1>
+        <form id="form-signup">
+            <input type="text" id="signup-name" class="auth-input" placeholder="الاسم الكامل" required>
+            <input type="email" id="signup-email" class="auth-input" placeholder="البريد الإلكتروني" required>
+            <div class="password-field">
+                <input type="password" id="signup-password" class="auth-input" placeholder="كلمة السر" required>
+                <span class="toggle-password" onclick="app.togglePasswordVisibility('signup-password')">👁️</span>
             </div>
-            <a onclick="authSwitch('login')" class="auth-switch">العودة لتسجيل الدخول</a>
+            <button type="submit" class="auth-btn">تسجيل</button>
+        </form>
+        <a onclick="authSwitch('login')" class="auth-switch">لديك حساب بالفعل؟ دخول</a>
+    </div>
+
+    <!-- Reset Password Form -->
+    <div id="reset-view" class="auth-card" style="display: none;">
+        <h1 style="color: #d4af37; margin-bottom: 20px;">إعادة تعيين كلمة السر</h1>
+        <p style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">أدخل بريدك الإلكتروني للبحث عن حسابك.</p>
+        <form id="form-reset">
+            <input type="email" id="reset-email" class="auth-input" placeholder="البريد الإلكتروني" required>
+            <button type="submit" class="auth-btn">بحث عن الحساب</button>
+        </form>
+        <div id="reset-new-sec" style="display: none; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px;">
+            <p style="color: #00ff41; margin-bottom: 15px;">✅ تم العثور على الحساب! أدخل كلمة السر الجديدة:</p>
+            <input type="password" id="reset-new-password" class="auth-input" placeholder="كلمة السر الجديدة" required>
+            <button onclick="app.handleFinalReset()" class="auth-btn" style="background: #00ff41; color: #000;">تحديث
+                كلمة السر</button>
         </div>
+        <a onclick="authSwitch('login')" class="auth-switch">العودة لتسجيل الدخول</a>
+    </div>
     </div>
 
     <!-- DASHBOARD SECTION -->
