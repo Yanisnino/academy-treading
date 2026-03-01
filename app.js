@@ -81,7 +81,7 @@ class AcademyPlatform {
 
     async handleLogin(email, password) {
         try {
-            const response = await fetch('/api/auth', {
+            const response = await fetch('https://academy-treading.onrender.com/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'login', payload: { email, password } })
@@ -94,13 +94,13 @@ class AcademyPlatform {
             }
         } catch (err) {
             console.error(err);
-            alert('❌ فشل الاتصال بقاعدة البيانات. تأكد من رفع الموقع على Netlify.');
+            alert('❌ فشل الاتصال بقاعدة البيانات. تأكد من رفع الموقع بشكل صحيح على Render.');
         }
     }
 
     async handleSignup(name, email, password) {
         try {
-            const response = await fetch('/api/auth', {
+            const response = await fetch('https://academy-treading.onrender.com/api/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'signup', payload: { name, email, password, role: 'student' } })
