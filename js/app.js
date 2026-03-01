@@ -1,35 +1,23 @@
-// Academy Platform - ORIGINAL BACKUP (RESTORED & RENDER-READY)
+// Trading Academy - Professional Restored Version (Modular & Styled)
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('✅ Restoration Complete: Original Backup Loaded.');
+    console.log('✅ Academy Platform: Fully Organized Version Loaded.');
     window.app = new AcademyPlatform();
 });
 
 class AcademyPlatform {
     constructor() {
-        // Storage Keys
-        this.KEY_USERS = 'academy_users_db_v3';
         this.KEY_SESSION = 'academy_current_session_v3';
         this.KEY_MSGS = 'academy_messages_v3';
+        this.currentUser = JSON.parse(localStorage.getItem(this.KEY_SESSION)) || null;
+        this.messages = JSON.parse(localStorage.getItem(this.KEY_MSGS)) || [];
 
-        // Initialize Data
-        this.users = this.loadData(this.KEY_USERS, []);
-        this.currentUser = this.loadData(this.KEY_SESSION, null);
-        this.messages = this.loadData(this.KEY_MSGS, []);
-
-        // Bind DOM Elements
+        // DOM Elements
         this.authContainer = document.getElementById('auth-container');
         this.dashboardContainer = document.getElementById('dashboard-container');
-        this.sidebar = document.getElementById('app-sidebar');
+        this.sidebarEl = document.getElementById('app-sidebar');
         this.mainContent = document.getElementById('main-content');
 
         this.init();
-    }
-
-    loadData(key, defaultVal) {
-        try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : defaultVal;
-        } catch (e) { return defaultVal; }
     }
 
     init() {
@@ -61,9 +49,17 @@ class AcademyPlatform {
                 );
             };
         }
+
+        const resetForm = document.getElementById('form-reset');
+        if (resetForm) {
+            resetForm.onsubmit = (e) => {
+                e.preventDefault();
+                this.handleResetInitial(document.getElementById('reset-email').value.trim());
+            };
+        }
     }
 
-    // --- Database Actions ---
+    // --- Authentication ---
 
     async handleLogin(email, password) {
         try {
@@ -75,8 +71,12 @@ class AcademyPlatform {
             const data = await response.json();
             if (response.ok) {
                 this.createSession(data);
-            } else { alert(`❌ خطأ: ${data.error}`); }
-        } catch (err) { alert('❌ فشل الاتصال بقاعدة البيانات.'); }
+            } else {
+                alert(`❌ خطأ: ${data.error}`);
+            }
+        } catch (err) {
+            alert('❌ فشل الاتصال بالسيرفر. تأكد من تشغيل السيرفر المحلي أو الاتصال بـ Render.');
+        }
     }
 
     async handleSignup(name, email, password) {
@@ -90,8 +90,50 @@ class AcademyPlatform {
             if (response.ok) {
                 this.createSession(data);
                 alert('✅ تم إنشاء الحساب بنجاح!');
-            } else { alert(`❌ خطأ: ${data.error}`); }
-        } catch (err) { alert('❌ فشل الاتصال بالسيرفر.'); }
+            } else {
+                alert(`❌ خطأ: ${data.error}`);
+            }
+        } catch (err) {
+            alert('❌ فشل الاتصال بالسيرفر.');
+        }
+    }
+
+    async handleResetInitial(email) {
+        try {
+            const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'checkEmail', payload: { email } })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('reset-new-sec').style.display = 'block';
+                this.resetEmail = email; // Store for final step
+            } else {
+                alert('❌ الحساب غير موجود. يرجى التأكد من البريد الإلكتروني.');
+            }
+        } catch (err) {
+            alert('❌ فشل الاتصال.');
+        }
+    }
+
+    async handleFinalReset() {
+        const password = document.getElementById('reset-new-password').value.trim();
+        if (password.length < 6) return alert('كلمة السر يجب أن تكون 6 أحرف على الأقل.');
+
+        try {
+            const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'updatePassword', payload: { email: this.resetEmail, password } })
+            });
+            if (response.ok) {
+                alert('✅ تم تحديث كلمة السر بنجاح! يمكنك الآن تسجيل الدخول.');
+                this.showAuth('login');
+            } else {
+                alert('❌ حدث خطأ في تحديث البيانات.');
+            }
+        } catch (err) { alert('❌ فشل الاتصال.'); }
     }
 
     createSession(user) {
@@ -107,10 +149,7 @@ class AcademyPlatform {
         }
     }
 
-    saveUsers() { localStorage.setItem(this.KEY_USERS, JSON.stringify(this.users)); }
-    saveMessages() { localStorage.setItem(this.KEY_MSGS, JSON.stringify(this.messages)); }
-
-    // --- UI Logic ---
+    // --- Core UI logic ---
 
     showAuth(view) {
         this.dashboardContainer.style.display = 'none';
@@ -124,181 +163,354 @@ class AcademyPlatform {
         this.authContainer.style.display = 'none';
         this.dashboardContainer.style.display = 'flex';
         this.renderSidebar();
-        this.loadPage(this.currentUser.role === 'admin' ? 'admin-users' : 'home');
-        this.initResetListeners();
-    }
 
-    initResetListeners() {
-        const resetForm = document.getElementById('form-reset');
-        if (resetForm) {
-            resetForm.onsubmit = (e) => {
-                e.preventDefault();
-                alert('يرجى التواصل مع الإدارة عبر التليجرام لإعادة تعيين كلمة السر.');
-            };
-        }
-    }
-
-    togglePasswordVisibility(inputId) {
-        const input = document.getElementById(inputId);
-        const icon = input.nextElementSibling;
-        if (input.type === 'password') {
-            input.type = 'text'; icon.textContent = '🔒';
+        // Default page based on role
+        if (this.currentUser.role === 'admin') {
+            this.loadPage('admin-users');
         } else {
-            input.type = 'password'; icon.textContent = '👁️';
+            this.loadPage('home');
         }
     }
 
     renderSidebar() {
+        if (!this.sidebarEl) return;
+
+        const isAdm = this.currentUser.role === 'admin';
+        const name = this.currentUser.name || 'مستخدم';
+        const char = name.charAt(0).toUpperCase();
+
+        // Calculate Notifications
         let notifyCount = 0;
-        if (this.currentUser.role === 'admin') {
+        if (isAdm) {
             notifyCount = this.messages.filter(m => !m.reply).length;
         } else {
             notifyCount = this.messages.filter(m => m.userId === this.currentUser.id && m.reply && !m.seen).length;
         }
 
-        let content = `
-            <div class="user-info">
-                <div class="user-avatar" style="width:60px; height:60px; background:#d4af37; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold; font-size:1.5rem;">
-                    ${this.currentUser.name.charAt(0)}
+        let html = `
+            <div class="user-profile">
+                <div class="avatar" style="background:var(--primary); color:#000; font-weight:bold; font-size:1.2rem; display:flex; align-items:center; justify-content:center;">
+                    ${char}
                 </div>
-                <h3>${this.currentUser.name}</h3>
-                <span style="color:#888; font-size:0.8rem;">${this.currentUser.role === 'admin' ? '🛡️ مدير النظام' : '🎓 طالـــب'}</span>
+                <div class="user-info">
+                    <span class="name">${name}</span>
+                    <span class="rank">${isAdm ? '🛡️ مدير النظام' : '🎓 طالـــب'}</span>
+                </div>
+            </div>
+
+            <div class="nav-menu">
+                ${isAdm ? `
+                    <div class="nav-label">لوحة التحكم</div>
+                    <a class="nav-item" id="nav-admin-users" onclick="app.loadPage('admin-users')">
+                        <i data-lucide="users"></i> <span>إدارة الطلاب</span>
+                    </a>
+                    <a class="nav-item" id="nav-admin-support" onclick="app.loadPage('admin-support')">
+                        <i data-lucide="mail"></i> <span>تذاكر الدعم</span>
+                        ${notifyCount > 0 ? `<span class="notify-badge">${notifyCount}</span>` : ''}
+                    </a>
+                ` : ''}
+
+                <div class="nav-label">الرئيسية</div>
+                <a class="nav-item" id="nav-home" onclick="app.loadPage('home')">
+                    <i data-lucide="home"></i> <span>الرئيسية 🏠</span>
+                </a>
+                <a class="nav-item" id="nav-about" onclick="app.loadPage('about')">
+                    <i data-lucide="info"></i> <span>من نحن؟ 🌟</span>
+                </a>
+
+                <div class="nav-label">الأكاديمية الأكاديمية</div>
+                <a class="nav-item" id="nav-lessons-hub" onclick="app.loadPage('lessons-hub')">
+                    <i data-lucide="book-open"></i> <span>الدروس 📚</span>
+                </a>
+                <a class="nav-item" id="nav-strategies" onclick="app.loadPage('strategies')">
+                    <i data-lucide="zap"></i> <span>استراتيجيات ⚡</span>
+                </a>
+                <a class="nav-item" id="nav-indicators" onclick="app.loadPage('indicators')">
+                    <i data-lucide="line-chart"></i> <span>مؤشرات 📉</span>
+                </a>
+                <a class="nav-item" id="nav-psychology" onclick="app.loadPage('psychology')">
+                    <i data-lucide="brain"></i> <span>سيكولوجية 🧘</span>
+                </a>
+                <a class="nav-item" id="nav-risk_management" onclick="app.loadPage('risk_management')">
+                    <i data-lucide="shield"></i> <span>إدارة المخاطر 🛡️</span>
+                </a>
+                <a class="nav-item" id="nav-tools" onclick="app.loadPage('tools')">
+                    <i data-lucide="wrench"></i> <span>أدوات ومنصات 🛠️</span>
+                </a>
+
+                <div class="nav-label">المساعدة</div>
+                <a class="nav-item" id="nav-student-support" onclick="app.loadPage('student-support')">
+                    <i data-lucide="message-circle"></i> <span>تذاكر الدعم 💬</span>
+                </a>
+                <a class="nav-item" onclick="app.startCandleQuiz()">
+                    <i data-lucide="flame"></i> <span>اختبار الشموع 🕯️</span>
+                </a>
+
+                <div style="margin-top:2rem; border-top:1px solid var(--border); padding-top:1rem;">
+                    <a class="nav-item" onclick="app.logout()" style="color:#ff4d4d;">
+                        <i data-lucide="log-out"></i> <span>خروج 🚪</span>
+                    </a>
+                </div>
             </div>
         `;
 
-        if (this.currentUser.role === 'admin') {
-            content += `
-                <div class="nav-label" style="color:#d4af37;">🛡️ أدوات الإدارة</div>
-                <button onclick="app.loadPage('admin-users')" class="nav-btn">👥 إدارة المستخدمين</button>
-                <button onclick="app.loadPage('admin-support')" class="nav-btn" style="position:relative;">
-                    📩 تذاكر الدعم 
-                    ${notifyCount > 0 ? `<span style="position:absolute; left:10px; top:15px; background:#ff4d4d; color:white; border-radius:10px; padding:2px 8px; font-size:0.7rem;">${notifyCount}</span>` : ''}
-                </button>
-            `;
-        }
-
-        content += `
-            <div class="nav-label">الرئيسية</div>
-            <button onclick="app.loadPage('home')" class="nav-btn">🏠 الرئيسية</button>
-            <div class="nav-label">الأكاديمية</div>
-            <button onclick="app.loadPage('lessons-hub')" class="nav-btn">📚 الدروس</button>
-            <button onclick="app.loadPage('strategies')" class="nav-btn">⚡ استراتيجيات</button>
-            <button onclick="app.loadPage('indicators')" class="nav-btn">📉 مؤشرات</button>
-            <button onclick="app.loadPage('psychology')" class="nav-btn">🧘 سيكولوجية</button>
-            <button onclick="app.loadPage('risk_management')" class="nav-btn">🛡️ إدارة المخاطر</button>
-            <button onclick="app.loadPage('tools')" class="nav-btn">🛠️ أدوات ومنصات</button>
-            <div class="nav-label">المساعدة</div>
-            <button onclick="app.loadPage('student-support')" class="nav-btn">💬 تذاكر الدعم</button>
-            <button onclick="app.startCandleQuiz()" class="nav-btn">🕯️ اختبار الشموع</button>
-        `;
-
-        content += `<button onclick="app.logout()" class="nav-btn logout" style="margin-top:20px; background:#222;">🚪 تسجيل الخروج</button>`;
-        this.sidebar.innerHTML = content;
+        this.sidebarEl.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
     }
 
     loadPage(pageId) {
-        this.mainContent.innerHTML = '';
+        console.log(`Loading Page: ${pageId}`);
+        this.mainContent.innerHTML = ''; // Clear content
         window.scrollTo(0, 0);
 
-        if (pageId === 'admin-users') { this.renderAdminUsers(); return; }
-        if (pageId === 'admin-support') { this.renderAdminSupport(); return; }
-        if (pageId === 'student-support') { this.renderStudentSupport(); return; }
-        if (pageId === 'quiz-page') { this.renderQuizPage(); return; }
-        if (pageId === 'candle-quiz-room') { this.renderCandleQuiz(); return; }
+        // Remove active class from all nav items
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        const activeNav = document.getElementById(`nav-${pageId}`);
+        if (activeNav) activeNav.classList.add('active');
 
+        // Handle Special Dynamic Pages
+        if (pageId === 'admin-users') return this.renderAdminUsers();
+        if (pageId === 'admin-support') return this.renderAdminSupport();
+        if (pageId === 'student-support') return this.renderStudentSupport();
+        if (pageId === 'quiz-page') return this.renderQuizPage(); // From content.js but custom logic
+        if (pageId === 'candle-quiz-room') return this.renderCandleQuiz();
+
+        // Load content from content.js
         if (typeof pages !== 'undefined' && pages[pageId]) {
-            this.mainContent.innerHTML = pages[pageId];
+            this.mainContent.innerHTML = `<div class="content-wrapper">${pages[pageId]}</div>`;
             if (window.lucide) window.lucide.createIcons();
+
+            // Re-bind any specific buttons in and content
+            if (pageId === 'lessons-hub' || pageId === 'home') this.bindContentBtns();
+
         } else {
-            this.mainContent.innerHTML = `<div class="content-block"><h1>404</h1><p>الصفحة قيد التجهيز.</p></div>`;
+            this.mainContent.innerHTML = `<div style="padding:100px; text-align:center;">
+                <h1 style="font-size:4rem; color:var(--primary);">404</h1>
+                <p>عذراً، هذه الصفحة قيد التطوير أو غير موجودة.</p>
+                <button class="btn btn-primary" onclick="app.loadPage('home')" style="margin-top:20px;">العودة للرئيسية</button>
+            </div>`;
         }
     }
 
-    // --- Feature Rendering ---
+    bindContentBtns() {
+        // Find any buttons that use loadPage or startQuiz inside the innerHTML and ensures they work
+        // These are usually handled by global scope, but good to check.
+    }
+
+    // --- Admin & Support Logic ---
 
     renderAdminUsers() {
-        const students = (this.users || []).filter(u => u.role !== 'admin');
-        let rows = students.length ? students.map(u => `
-            <tr>
-                <td style="padding:12px;">${u.name}</td>
-                <td style="padding:12px;">${u.email}</td>
-                <td style="padding:12px; color:#00ff41;">${u.password || '******'}</td>
-                <td style="padding:12px;"><button onclick="app.deleteUser('${u.id}')" style="background:#ff4d4d; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">حذف 🗑️</button></td>
-            </tr>`).join('') : '<tr><td colspan="4" style="text-align:center; padding:20px;">لا يوجد طلاب حالياً</td></tr>';
-
-        this.mainContent.innerHTML = `<div class="page-header"><h1>👥 إدارة المستخدمين</h1></div>
-            <div style="background:#111; padding:20px; border-radius:15px; border:1px solid #333;">
-                <table style="width:100%; text-align:right;">
-                    <thead><tr style="border-bottom:2px solid #222;"><th>الاسم</th><th>البريد</th><th>كلمة السر</th><th>تحكم</th></tr></thead>
-                    <tbody>${rows}</tbody>
+        this.mainContent.innerHTML = `
+            <div class="page-header">
+                <h1>👥 قائمة الطلاب</h1>
+                <div class="stat-card">إجمالي الطلاب: ${this.messages.length}</div>
+            </div>
+            <p style="color:var(--text-muted); margin-bottom:2rem;">هنا يمكنك مراجعة الطلاب المسجلين وحساباتهم.</p>
+            <div style="background:var(--card-bg); border-radius:16px; border:1px solid var(--border); overflow:hidden;">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>الاسم</th><th>البريد</th><th>التحكم</th></tr>
+                    </thead>
+                    <tbody id="admin-user-rows"></tbody>
                 </table>
-            </div>`;
+            </div>
+        `;
+        this.fetchAndRenderUsers();
+    }
+
+    async fetchAndRenderUsers() {
+        try {
+            const response = await fetch('/api/auth'); // GET call for users
+            const users = await response.json();
+            const tbody = document.getElementById('admin-user-rows');
+            if (users && users.length) {
+                tbody.innerHTML = users.filter(u => u.role !== 'admin').map(u => `
+                    <tr>
+                        <td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" style="background:#ff4d4d; color:#fff;" onclick="app.deleteUser('${u.id}')">حذف</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px;">لا يوجد طلاب حالياً.</td></tr>';
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    async deleteUser(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا الحساب؟')) return;
+        try {
+            const res = await fetch('/api/auth', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payload: { id } })
+            });
+            if (res.ok) { this.renderAdminUsers(); }
+        } catch (e) { alert('خطأ في الحذف.'); }
+    }
+
+    renderStudentSupport() {
+        this.mainContent.innerHTML = `
+            <div class="page-header">
+                <h1>الدعم الفني 💬</h1>
+            </div>
+            <div style="background:var(--card-bg); padding:2rem; border-radius:16px; border:1px solid var(--border); margin-bottom:2rem;">
+                <h3 style="margin-bottom:1rem;">أرسل رسالة للمدير</h3>
+                <textarea id="support-inp" placeholder="صف مشكلتك هنا..." style="width:100%; height:120px; background:#000; color:#fff; border:1px solid var(--border); border-radius:12px; padding:1rem; font-family:inherit;"></textarea>
+                <button class="btn btn-primary" style="margin-top:1rem;" onclick="app.sendMsg()">إرسال الرسالة</button>
+            </div>
+            <div id="student-msgs-history"></div>
+        `;
+        this.renderMsgHistory();
+    }
+
+    renderMsgHistory() {
+        const hist = document.getElementById('student-msgs-history');
+        const myMsgs = this.messages.filter(m => m.userId === this.currentUser.id).reverse();
+        hist.innerHTML = myMsgs.map(m => `
+            <div class="msg-card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span style="color:var(--primary); font-weight:bold;">أنت</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">${m.date}</span>
+                </div>
+                <p>${m.text}</p>
+                ${m.reply ? `
+                    <div class="admin-reply-box">
+                        <strong style="color:var(--primary);">رد الإدارة:</strong>
+                        <p>${m.reply}</p>
+                    </div>
+                ` : '<div style="margin-top:10px; color:var(--text-muted); font-size:0.85rem;">⏳ في انتظار الرد...</div>'}
+            </div>
+        `).join('');
+    }
+
+    sendMsg() {
+        const txt = document.getElementById('support-inp').value.trim();
+        if (!txt) return;
+        const msg = {
+            id: Date.now(),
+            userId: this.currentUser.id,
+            userName: this.currentUser.name,
+            text: txt,
+            reply: null,
+            date: new Date().toLocaleString('ar-EG'),
+            seen: false
+        };
+        this.messages.push(msg);
+        localStorage.setItem(this.KEY_MSGS, JSON.stringify(this.messages));
+        this.renderStudentSupport();
     }
 
     renderAdminSupport() {
         const pending = this.messages.filter(m => !m.reply).reverse();
-        this.mainContent.innerHTML = `<div class="page-header"><h1>إدارة الدعم</h1></div>
-            <div id="admin-pending-list">${pending.map(m => this.createMessageHTML(m, true)).join('') || '<p>لا توجد رسائل جديدة.</p>'}</div>`;
-    }
-
-    renderStudentSupport() {
-        this.mainContent.innerHTML = `<div class="page-header"><h1>الدعم الفني 💬</h1></div>
-            <div style="background:#111; padding:20px; border-radius:12px; border:1px solid #333; margin-bottom:20px;">
-                <textarea id="support-msg" style="width:100%; height:100px; background:#000; color:#fff; border:1px solid #444; border-radius:8px; padding:10px;" placeholder="اكتب رسالتك للمدير..."></textarea>
-                <button onclick="app.sendSupportMessage()" class="auth-btn" style="width:auto; margin-top:10px;">إرسال 📤</button>
+        this.mainContent.innerHTML = `
+            <div class="page-header">
+                <h1>تذاكر الدعم الواردة 📩</h1>
             </div>
-            <div id="msgs-list">${this.messages.filter(m => m.userId === this.currentUser.id).reverse().map(m => this.createMessageHTML(m, false)).join('')}</div>`;
-    }
-
-    sendSupportMessage() {
-        const txt = document.getElementById('support-msg').value.trim();
-        if (!txt) return;
-        const msg = { id: Date.now(), userId: this.currentUser.id, userName: this.currentUser.name, text: txt, reply: null, date: new Date().toLocaleString('ar-EG') };
-        this.messages.push(msg); this.saveMessages(); this.renderStudentSupport();
-    }
-
-    createMessageHTML(msg, isAdmin) {
-        return `<div class="msg-card" style="background:#000; padding:15px; border:1px solid #222; border-radius:10px; margin-bottom:10px;">
-            <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888;"><strong>${msg.userName}</strong><span>${msg.date}</span></div>
-            <p>${msg.text}</p>
-            ${msg.reply ? `<div style="background:#111; padding:10px; border-left:3px solid #d4af37; margin-top:10px;"><strong>الرد:</strong> ${msg.reply}</div>` :
-                (isAdmin ? `<div style="margin-top:10px;"><input id="reply-${msg.id}" style="background:#111; color:#fff; border:1px solid #333; padding:5px;" placeholder="اكتب الرد..."><button onclick="app.replyMsg(${msg.id})" style="margin-right:10px;">رد</button></div>` : '<p style="color:#d4af37;">⏳ في انتظار الرد...</p>')}
-        </div>`;
+            <div id="admin-pending-msgs">
+                ${pending.length ? pending.map(m => `
+                    <div class="msg-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <span style="color:var(--primary); font-weight:bold;">${m.userName}</span>
+                            <span style="font-size:0.8rem; color:var(--text-muted);">${m.date}</span>
+                        </div>
+                        <p>${m.text}</p>
+                        <div style="margin-top:15px; display:flex; gap:10px;">
+                            <input id="rep-${m.id}" placeholder="اكتب الرد هنا..." style="flex:1; background:#000; color:#fff; border:1px solid var(--border); padding:8px; border-radius:8px;">
+                            <button class="btn btn-primary btn-sm" onclick="app.replyMsg(${m.id})">رد</button>
+                        </div>
+                    </div>
+                `).join('') : '<p style="text-align:center; padding:50px; color:var(--text-muted);">لا توجد رسائل جديدة.</p>'}
+            </div>
+        `;
     }
 
     replyMsg(id) {
-        const reply = document.getElementById(`reply-${id}`).value;
-        const m = this.messages.find(msg => msg.id === id);
-        if (m) { m.reply = reply; this.saveMessages(); this.renderAdminSupport(); }
+        const txt = document.getElementById(`rep-${id}`).value.trim();
+        if (!txt) return;
+        const msg = this.messages.find(m => m.id === id);
+        if (msg) {
+            msg.reply = txt;
+            localStorage.setItem(this.KEY_MSGS, JSON.stringify(this.messages));
+            this.renderAdminSupport();
+        }
     }
 
+    // --- Quiz Systems ---
+
     startCandleQuiz() {
-        this.quizState = {
-            current: 0, score: 0, questions: [
-                { name: 'Hammer (المطرقة)', svg: '<rect x="30" y="10" width="20" height="20" fill="#00ff41"/><line x1="40" y1="30" x2="40" y2="80" stroke="#00ff41" stroke-width="2"/>' },
-                { name: 'Doji (دوجي)', svg: '<line x1="40" y1="20" x2="40" y2="80" stroke="#fff" stroke-width="2"/><line x1="25" y1="50" x2="55" y2="50" stroke="#fff" stroke-width="2"/>' }
+        this.candleGame = {
+            step: 0,
+            score: 0,
+            items: [
+                { name: 'Hammer (المطرقة)', svg: '<rect x="40" y="20" width="20" height="20" fill="#00ff41"/><line x1="50" y1="40" x2="50" y2="90" stroke="#00ff41" stroke-width="3"/>' },
+                { name: 'Shooting Star', svg: '<rect x="40" y="70" width="20" height="20" fill="#ff4d4d"/><line x1="50" y1="10" x2="50" y2="70" stroke="#ff4d4d" stroke-width="3"/>' },
+                { name: 'Doji', svg: '<line x1="50" y1="10" x2="50" y2="90" stroke="#fff" stroke-width="2"/><line x1="30" y1="50" x2="70" y2="50" stroke="#fff" stroke-width="3"/>' }
             ]
         };
         this.loadPage('candle-quiz-room');
     }
 
     renderCandleQuiz() {
-        const q = this.quizState.questions[this.quizState.current];
-        this.mainContent.innerHTML = `<div class="page-header"><h1>اختبر مهاراتك 🕯️</h1></div>
-            <div style="text-align:center; background:#111; padding:30px; border-radius:15px;">
-                <div style="margin-bottom:20px;"><svg width="100" height="100" viewBox="0 0 100 100">${q.svg}</svg></div>
-                <div style="display:grid; gap:10px; max-width:300px; margin:0 auto;">
-                    ${['Hammer (المطرقة)', 'Doji (دوجي)', 'Engulfing'].map(opt => `<button onclick="app.checkCandle('${opt}', '${q.name}')" class="nav-btn">${opt}</button>`).join('')}
+        const q = this.candleGame.items[this.candleGame.step];
+        this.mainContent.innerHTML = `
+            <div class="page-header"><h1>اختبر بصرك في الشموع 🕯️</h1></div>
+            <div style="background:var(--card-bg); padding:3rem; border-radius:24px; text-align:center; max-width:600px; margin:0 auto; border:1px solid var(--border);">
+                <div style="margin-bottom:2rem; background:#000; padding:20px; border-radius:15px; display:inline-block;">
+                    <svg width="100" height="100" viewBox="0 0 100 100">${q.svg}</svg>
                 </div>
-            </div>`;
+                <h2 style="margin-bottom:2rem;">ما هو نوع هذه الشمعة؟</h2>
+                <div style="display:grid; grid-template-columns:1fr; gap:1rem;">
+                    ${['Hammer (المطرقة)', 'Shooting Star', 'Doji', 'Engulfing'].map(opt => `
+                        <button class="nav-btn" style="text-align:center; border:1px solid var(--border);" onclick="app.checkCandleAns('${opt}')">${opt}</button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
     }
 
-    checkCandle(sel, cor) {
-        if (sel === cor) this.quizState.score++;
-        this.quizState.current++;
-        if (this.quizState.current < this.quizState.questions.length) this.renderCandleQuiz();
-        else this.mainContent.innerHTML = `<div style="text-align:center; padding:50px;"><h2>النتيجة: ${this.quizState.score} / ${this.quizState.questions.length}</h2></div>`;
+    checkCandleAns(opt) {
+        if (opt === this.candleGame.items[this.candleGame.step].name) {
+            this.candleGame.score++;
+        }
+        this.candleGame.step++;
+        if (this.candleGame.step < this.candleGame.items.length) {
+            this.renderCandleQuiz();
+        } else {
+            this.mainContent.innerHTML = `<div style="text-align:center; padding:100px;">
+                <h1>انتهى الاختبار!</h1>
+                <h2 style="color:var(--primary); font-size:3rem;">النتيجة: ${this.candleGame.score} / ${this.candleGame.items.length}</h2>
+                <button class="btn btn-primary" style="margin-top:2rem;" onclick="app.loadPage('home')">العودة للرئيسية</button>
+            </div>`;
+        }
+    }
+
+    startQuiz(type) {
+        // Redirection to the Quiz Page using the content.js structure
+        this.loadPage('quiz-page');
+        // If the original quiz.js is loaded, it will handle it via startQuiz()
+        if (typeof window.startQuiz === 'function' && window.startQuiz.toString().includes('quiz-interface')) {
+            console.log("Calling specialized quiz function from quiz.js");
+            setTimeout(() => window.startQuiz(), 100);
+        }
+    }
+
+    togglePasswordVisibility(id) {
+        const inp = document.getElementById(id);
+        const icon = inp.parentNode.querySelector('.toggle-password');
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            icon.textContent = '🔒';
+        } else {
+            inp.type = 'password';
+            icon.textContent = '👁️';
+        }
     }
 }
+
+// Global Switches
 window.authSwitch = (view) => app.showAuth(view);
-window.startQuiz = (type) => app.startCandleQuiz();
+window.startQuiz = (type) => app.startQuiz(type);
+window.startSimulator = () => app.loadPage('quiz-page'); // Map to quiz if needed
